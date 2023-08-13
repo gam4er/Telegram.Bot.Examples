@@ -4,13 +4,21 @@ using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.InlineQueryResults;
 using Telegram.Bot.Types.ReplyMarkups;
+using OutlineManager.Types;
+using OutlineManager;
+using Microsoft.VisualBasic;
 
 namespace Telegram.Bot.Services;
+
+
 
 public class UpdateHandler : IUpdateHandler
 {
     private readonly ITelegramBotClient _botClient;
     private readonly ILogger<UpdateHandler> _logger;
+
+    private static string apiUrl = "11111";
+    public static OutlineManager.Outline outline = new OutlineManager.Outline(apiUrl);
 
     public UpdateHandler(ITelegramBotClient botClient, ILogger<UpdateHandler> logger)
     {
@@ -127,18 +135,42 @@ public class UpdateHandler : IUpdateHandler
         {
             await botClient.SendChatActionAsync(
                 message.Chat.Id,
-                ChatAction.UploadPhoto,
+                ChatAction.Typing,
                 cancellationToken: cancellationToken);
 
-            const string filePath = "Files/tux.png";
-            await using FileStream fileStream = new(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-            var fileName = filePath.Split(Path.DirectorySeparatorChar).Last();
+            //const string filePath = "Files/tux.png";
+            //await using FileStream fileStream = new(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            //var fileName = filePath.Split(Path.DirectorySeparatorChar).Last();
 
-            return await botClient.SendPhotoAsync(
+
+            //
+            var outlineKey = outline.CreateKey();
+            outlineKey.Name = message.Chat.Username ?? "NewUser";
+            
+            //var keys = outline.GetKeys();
+            /*
+            return await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: outlineKey.AccessUrl,                
+                //replyMarkup: RequestReplyKeyboard,
+                cancellationToken: cancellationToken);
+            */
+            return await botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: outlineKey.AccessUrl,
+                parseMode: ParseMode.Html,                           
+                //replyMarkup: new InlineKeyboardMarkup(
+                //    InlineKeyboardButton.WithUrl(
+                //    text: outlineKey.AccessUrl,
+                //    url: outlineKey.AccessUrl
+                //)),
+                cancellationToken: cancellationToken);
+
+            /*return await botClient.SendPhotoAsync(
                 chatId: message.Chat.Id,
                 photo: new InputFileStream(fileStream, fileName),
                 caption: "Nice Picture",
-                cancellationToken: cancellationToken);
+                cancellationToken: cancellationToken);*/
         }
 
         static async Task<Message> RequestContactAndLocation(ITelegramBotClient botClient, Message message, CancellationToken cancellationToken)
